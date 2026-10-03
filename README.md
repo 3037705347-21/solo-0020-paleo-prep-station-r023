@@ -1,6 +1,6 @@
 # 古生物修复制备台
 
-古生物修复制备台是一个使用 Go 编写的后端基线，用于记录化石标本、审批修复方案、回填制备进度，并在全部工序完成后办理研究借阅放行。
+古生物修复制备台是一个使用 Go 编写的后端基线，用于记录化石标本、审批修复方案、回填制备进度，并在全部工序完成后办理研究借阅放行与归还登记。
 
 该服务只使用进程内仓储，便于在本机重复启动和检查。它不依赖数据库、远端接口或其他在线资源。
 
@@ -32,6 +32,7 @@ go run ./cmd/paleo-prep-station --addr 127.0.0.1:18133
 - `POST /plans/{id}/approval`
 - `POST /plans/{id}/progress`
 - `POST /specimens/{id}/release`
+- `POST /specimens/{id}/return`
 
 ## 本地验证
 
@@ -42,6 +43,7 @@ go run ./cmd/workflowcheck --workflow register-specimen
 go run ./cmd/workflowcheck --workflow approve-prep-plan
 go run ./cmd/workflowcheck --workflow log-preparation
 go run ./cmd/workflowcheck --workflow release-for-study
+go run ./cmd/workflowcheck --workflow return-from-loan
 ```
 
 这些检查会启动临时 HTTP 处理器并调用真实公共路由。

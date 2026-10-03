@@ -14,6 +14,7 @@ const (
 	SpecimenPreparing  SpecimenStatus = "preparing"
 	SpecimenStabilized SpecimenStatus = "stabilized"
 	SpecimenAvailable  SpecimenStatus = "available"
+	SpecimenReturned   SpecimenStatus = "returned"
 )
 
 type Specimen struct {
@@ -76,7 +77,7 @@ func NewSpecimen(
 }
 
 func (s Specimen) CanCreatePlan() bool {
-	return s.Status == SpecimenRegistered || s.Status == SpecimenPlanned
+	return s.Status == SpecimenRegistered || s.Status == SpecimenPlanned || s.Status == SpecimenReturned
 }
 
 func (s Specimen) IsStable() bool {
@@ -87,7 +88,7 @@ func (s *Specimen) MarkPlanned(now time.Time) error {
 	if s.Status == SpecimenPlanned {
 		return nil
 	}
-	if s.Status != SpecimenRegistered {
+	if s.Status != SpecimenRegistered && s.Status != SpecimenReturned {
 		return contracts.Conflict("specimen_not_plannable", "当前标本状态不能创建修复方案")
 	}
 	s.Status = SpecimenPlanned
@@ -127,6 +128,23 @@ func (s *Specimen) MarkAvailable(now time.Time) error {
 		return contracts.Conflict("specimen_not_releasable", "只有已稳定标本可以办理放行")
 	}
 	s.Status = SpecimenAvailable
+	s.Version++
+	s.UpdatedAt = now.UTC()
+	return nil
+}
+
+func (s *Specimen) ResolveReturn(condition ReturnCondition, now time.Time) error {
+	if s.Status != SpecimenAvailable {
+		return contracts.Conflict("specimen_not_on_loan", "只有已借出标本才能登记归还")
+	}
+	switch condition {
+	case ReturnIntact:
+		s.Status = SpecimenStabilized
+	case ReturnDamaged:
+		s.Status = SpecimenReturned
+	default:
+		return contracts.Invalid("invalid_return_condition", "归还检查结论必须是 intact 或 damaged")
+	}
 	s.Version++
 	s.UpdatedAt = now.UTC()
 	return nil
