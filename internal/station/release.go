@@ -26,8 +26,8 @@ func (s *Service) ReleaseSpecimen(
 		if m.HasOpenPlan(specimenID) {
 			return contracts.Conflict("open_plan_blocks_release", "存在未结束方案，不能办理研究放行")
 		}
-		if _, exists := m.ReleaseForSpecimen(specimenID); exists {
-			return contracts.Conflict("release_exists", "该标本已经存在放行记录")
+		if _, onLoan := m.OpenReleaseForSpecimen(specimenID); onLoan {
+			return contracts.Conflict("release_exists", "该标本存在未归还的放行记录，不能再次放行")
 		}
 		record, err := domain.NewReleaseRecord(
 			s.nextID("release"),

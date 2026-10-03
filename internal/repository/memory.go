@@ -12,6 +12,7 @@ type state struct {
 	plans     map[string]domain.PrepPlan
 	progress  map[string][]domain.ProgressEntry
 	releases  map[string]domain.ReleaseRecord
+	returns   map[string]domain.ReturnRecord
 }
 
 type MemoryRepository struct {
@@ -26,6 +27,7 @@ func NewMemory() *MemoryRepository {
 			plans:     make(map[string]domain.PrepPlan),
 			progress:  make(map[string][]domain.ProgressEntry),
 			releases:  make(map[string]domain.ReleaseRecord),
+			returns:   make(map[string]domain.ReturnRecord),
 		},
 	}
 }
@@ -54,6 +56,7 @@ func cloneMutation(source state) *Mutation {
 		plans:     make(map[string]domain.PrepPlan, len(source.plans)),
 		progress:  make(map[string][]domain.ProgressEntry, len(source.progress)),
 		releases:  make(map[string]domain.ReleaseRecord, len(source.releases)),
+		returns:   make(map[string]domain.ReturnRecord, len(source.returns)),
 	}
 	for key, value := range source.specimens {
 		copied.specimens[key] = value
@@ -66,6 +69,9 @@ func cloneMutation(source state) *Mutation {
 	}
 	for key, value := range source.releases {
 		copied.releases[key] = value
+	}
+	for key, value := range source.returns {
+		copied.returns[key] = value
 	}
 	return &Mutation{state: copied}
 }
@@ -152,9 +158,12 @@ func (m *Mutation) AppendProgress(value domain.ProgressEntry) {
 	m.state.progress[value.PlanID] = append(m.state.progress[value.PlanID], value)
 }
 
-func (m *Mutation) ReleaseForSpecimen(specimenID string) (domain.ReleaseRecord, bool) {
+func (m *Mutation) OpenReleaseForSpecimen(specimenID string) (domain.ReleaseRecord, bool) {
 	for _, value := range m.state.releases {
-		if value.SpecimenID == specimenID {
+		if value.SpecimenID != specimenID {
+			continue
+		}
+		if _, returned := m.ReturnForRelease(value.ID); !returned {
 			return value, true
 		}
 	}
@@ -163,4 +172,17 @@ func (m *Mutation) ReleaseForSpecimen(specimenID string) (domain.ReleaseRecord, 
 
 func (m *Mutation) PutRelease(value domain.ReleaseRecord) {
 	m.state.releases[value.ID] = value
+}
+
+func (m *Mutation) ReturnForRelease(releaseID string) (domain.ReturnRecord, bool) {
+	for _, value := range m.state.returns {
+		if value.ReleaseID == releaseID {
+			return value, true
+		}
+	}
+	return domain.ReturnRecord{}, false
+}
+
+func (m *Mutation) PutReturn(value domain.ReturnRecord) {
+	m.state.returns[value.ID] = value
 }

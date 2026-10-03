@@ -31,3 +31,9 @@ type ReleaseRequest struct {
 	Recipient  string `json:"recipient"`
 	ApprovedBy string `json:"approved_by"`
 }
+
+type ReturnRequest struct {
+	Condition  string `json:"condition"`
+	Note       string `json:"note"`
+	ReceivedBy string `json:"received_by"`
+}

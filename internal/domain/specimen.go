@@ -131,3 +131,20 @@ func (s *Specimen) MarkAvailable(now time.Time) error {
 	s.UpdatedAt = now.UTC()
 	return nil
 }
+
+func (s *Specimen) MarkReturned(condition ReturnCondition, now time.Time) error {
+	if s.Status != SpecimenAvailable {
+		return contracts.Conflict("specimen_not_on_loan", "只有借出中的标本可以登记归还")
+	}
+	switch condition {
+	case ReturnIntact:
+		s.Status = SpecimenStabilized
+	case ReturnDamaged:
+		s.Status = SpecimenRegistered
+	default:
+		return contracts.Invalid("invalid_condition", "归还检查结论必须是 intact 或 damaged")
+	}
+	s.Version++
+	s.UpdatedAt = now.UTC()
+	return nil
+}

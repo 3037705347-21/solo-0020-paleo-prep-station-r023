@@ -128,6 +128,28 @@
         "repository",
         "contracts"
       ]
+    },
+    {
+      "id": "return-from-loan",
+      "name": "Return from loan",
+      "entry": "POST /specimens/{id}/return",
+      "steps": [
+        "verify the specimen is on loan with an unreturned release record",
+        "record the inspection conclusion and receiving keeper",
+        "commit the return record and the specimen state change in one repository mutation"
+      ],
+      "success": "returns the return record and moves the specimen to stabilized (intact) or registered (damaged)",
+      "failure": "returns conflict when the specimen is not on loan or the release was already returned",
+      "verification": "workflowcheck releases, returns intact, re-releases, returns damaged, and verifies each deterministic outcome",
+      "module_ids": [
+        "entrypoint",
+        "runtimecheck",
+        "httpapi",
+        "station",
+        "domain",
+        "repository",
+        "contracts"
+      ]
     }
   ],
   "complexity": {
